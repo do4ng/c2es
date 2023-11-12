@@ -129,7 +129,7 @@ export function process(code: string, options?: TransformOptions) {
         string.overwrite(
           importer.loc.start,
           importer.loc.end,
-          `var ${importer.original || importer.as} = $$dynamic_require(${
+          `var ${importer.original || importer.id} = $$dynamic_require(${
             importer.value
           });`
         );
