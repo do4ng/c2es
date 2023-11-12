@@ -1,15 +1,16 @@
 {
   "name": "c2es",
   "version": "0.0.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./index.d.ts",
   "bin": "./bin.js",
   "files": [
     "dist",
     "bin.js",
     "index.d.ts"
   ],
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./index.d.ts",
+  "repository": "https://github.com/do4ng/c2es",
   "devDependencies": {
     "@types/node": "^18.11.10",
     "@typescript-eslint/eslint-plugin": "^5.36.1",
