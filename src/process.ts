@@ -99,6 +99,8 @@ export function process(code: string, options?: TransformOptions) {
     },
   });
 
+  string.appendLeft(0, options?.insert?.beforeImport || '');
+
   for (const importer of imports) {
     switch (importer.type) {
       case 'all':
@@ -139,6 +141,9 @@ export function process(code: string, options?: TransformOptions) {
     }
   }
 
+  string.appendLeft(0, options?.insert?.afterImport || '');
+  string.appendLeft(0, options?.insert?.beforeDefines || '');
+
   if (addDynamicRequire) {
     if (options?.dynamicImport) {
       addModuleImporter = true;
@@ -162,7 +167,13 @@ export function process(code: string, options?: TransformOptions) {
   }
 
   string.appendLeft(0, 'var module={exports:{}};');
+
+  string.appendLeft(0, options?.insert?.afterDefines || '');
+  string.append(options?.insert?.beforeExport || '');
+
   string.append('export default module;');
+
+  string.append(options?.insert?.afterExport || '');
 
   return {
     code: string.toString(),
