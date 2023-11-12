@@ -31,7 +31,10 @@ Provide entry and output filename. Automatically compiles and outputs to the app
 ```js
 const { c2es } = require('c2es');
 
-c2es('dist.js', 'dist.mjs');
+c2es('dist.js', 'dist.mjs', {
+  dynamicImport: false,
+  requirePrefix: '$$require_',
+});
 ```
 
 Or You can simply compile with cli
