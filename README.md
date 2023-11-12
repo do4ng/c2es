@@ -65,16 +65,15 @@ const m = require(target);
 output:
 
 ```ts
-var $$dynamic_require = async (m) => {
+var $$dynamic_require = (m) => {
   if (require) {
     return require(m);
   }
-  return $$m(await import(m));
+  throw new Error(`Cannot load module "${m}"`);
 };
-var $$m = (m) => m.default || m;
 var module = { exports: {} };
 const target = './main.js';
-var $$require_m = $$dynamic_require(target);
+var m = $$dynamic_require(target);
 export default module;
 ```
 
