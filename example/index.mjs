@@ -1,6 +1,10 @@
-/*1*/ import { readFileSync as $$require_readFileSync } from 'fs';
-/*1.1*/ /*2*/ var module = { exports: {} };
-/*2.1*/ var readFileSync = $$require_readFileSync;
-
-console.log(readFileSync('./main.js', 'utf-8'));
-/*3*/ export default module; /*3.1*/
+var $$dynamic_require = (m) => {
+  if (require) {
+    return require(m);
+  }
+  throw new Error(`Cannot load module "${m}"`);
+};
+var module = { exports: {} };
+const target = './main.js';
+var m = $$dynamic_require(target);
+export default module;
