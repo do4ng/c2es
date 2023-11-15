@@ -8,19 +8,20 @@ input source code:
 const { readFileSync } = require('fs');
 const { join: j } = require('path');
 
-module.exports.readme = readFileSync(j(__dirname, 'readme.md'));
+module.exports.readme = readFileSync(j(process.cwd(), 'package.json'), 'utf-8');
 ```
 
 output will be:
 
 ```js
-import { readFileSync as $$require_readFileSync } from 'fs';
-import { join as $$require_j } from 'path';
+import * as $$require_fs from 'fs';
+import * as $$require_path from 'path';
+var $$m = (m) => m.default || m;
 var module = { exports: {} };
-var readFileSync = $$require_readFileSync;
-var j = $$require_j;
+const { readFileSync } = $$m($$require_fs);
+const { join: j } = $$m($$require_path);
 
-module.exports.readme = readFileSync(j(__dirname, 'readme.md'));
+module.exports.readme = readFileSync(j(process.cwd(), 'package.json'), 'utf-8');
 export default module;
 ```
 
@@ -65,15 +66,16 @@ const m = require(target);
 output:
 
 ```ts
-var $$dynamic_require = (m) => {
-  if (require) {
+var $$dynamic = async (m) => {
+  if (global.require) {
     return require(m);
   }
-  throw new Error(`Cannot load module "${m}"`);
+  return $$m(await import(m));
 };
+var $$m = (m) => m.default || m;
 var module = { exports: {} };
 const target = './main.js';
-var m = $$dynamic_require(target);
+const m = $$dynamic(target);
 export default module;
 ```
 
@@ -85,21 +87,27 @@ input:
 
 ```ts
 function a() {
-  const { name: n, version: v } = require('./package.json');
+  const { name: n, version: v } = JSON.parse(
+    require('fs').readFileSync('./package.json', 'utf-8')
+  );
   console.log(n, v);
 }
+a();
 ```
 
 output:
 
 ```ts
-import { name as $$require_n, version as $$require_v } from './package.json';
+import * as $$require_a from 'fs';
+var $$m = (m) => m.default || m;
 var module = { exports: {} };
 function a() {
-  var n = $$require_n;
-  var v = $$require_v;
+  const { name: n, version: v } = JSON.parse(
+    $$m($$require_a).readFileSync('./package.json', 'utf-8')
+  );
   console.log(n, v);
 }
+a();
 export default module;
 ```
 
@@ -120,9 +128,10 @@ console.log(readFileSync('./main.js', 'utf-8'));
 output:
 
 ```ts
-import { readFileSync as _require_readFileSync } from 'fs';
+import * as _require_a from 'fs';
+var $$m = (m) => m.default || m;
 var module = { exports: {} };
-var readFileSync = _require_readFileSync;
+const { readFileSync } = $$m(_require_a);
 
 console.log(readFileSync('./main.js', 'utf-8'));
 export default module;
