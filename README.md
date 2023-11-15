@@ -14,15 +14,15 @@ module.exports.readme = readFileSync(j(process.cwd(), 'package.json'), 'utf-8');
 output will be:
 
 ```js
-import * as $$require_fs from 'fs';
-import * as $$require_path from 'path';
+import * as $$require_fs from 'node:fs';
+import * as $$require_path from 'node:path';
 var $$m = (m) => m.default || m;
 var module = { exports: {} };
 const { readFileSync } = $$m($$require_fs);
 const { join: j } = $$m($$require_path);
 
 module.exports.readme = readFileSync(j(process.cwd(), 'package.json'), 'utf-8');
-export default module;
+export default module.exports;
 ```
 
 ## Apis
@@ -76,7 +76,7 @@ var $$m = (m) => m.default || m;
 var module = { exports: {} };
 const target = './main.js';
 const m = $$dynamic(target);
-export default module;
+export default module.exports;
 ```
 
 Dynamic import is not yet supported. You can get it to work by defining `require()`.
@@ -108,7 +108,7 @@ function a() {
   console.log(n, v);
 }
 a();
-export default module;
+export default module.exports;
 ```
 
 - require prefix
@@ -128,13 +128,51 @@ console.log(readFileSync('./main.js', 'utf-8'));
 output:
 
 ```ts
-import * as _require_a from 'fs';
+import * as _require_a from 'node:fs';
 var $$m = (m) => m.default || m;
 var module = { exports: {} };
 const { readFileSync } = $$m(_require_a);
 
 console.log(readFileSync('./main.js', 'utf-8'));
-export default module;
+export default module.exports;
+```
+
+- redundant load
+
+input:
+
+```ts
+function a() {
+  require('fs');
+}
+
+function b() {
+  require('fs');
+}
+
+function c() {
+  require('fs');
+}
+```
+
+output:
+
+```ts
+import * as $$require_a from 'node:fs';
+var $$m = (m) => m.default || m;
+var module = { exports: {} };
+function a() {
+  $$m($$require_a);
+}
+
+function b() {
+  $$m($$require_a);
+}
+
+function c() {
+  $$m($$require_a);
+}
+export default module.exports;
 ```
 
 ## License
