@@ -79,7 +79,7 @@ export function process(code: string, options?: TransformOptions) {
   string.appendLeft(0, 'var module={exports:{}};');
   string.appendLeft(0, options?.insert?.afterDefines || '');
   string.append(options?.insert?.beforeExport || '');
-  string.append('export default module;');
+  string.append('export default module.exports;');
 
   string.append(options?.insert?.afterExport || '');
 
