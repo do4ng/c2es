@@ -7,170 +7,78 @@ export function process(code: string, options?: TransformOptions) {
   const string = new MagicString(code);
   const ast = Parser.parse(code, { ecmaVersion: 'latest' });
 
-  const imports: {
-    type: 'property' | 'all' | 'dynamic';
-    value: string;
-    id: string | string[];
-    as: string;
-    loc: {
-      start: number;
-      end: number;
-    };
-    original?: string;
-  }[] = [];
-
   const requirePrefix = options?.requirePrefix || '$$require_';
 
-  let addDynamicRequire = false;
-  let addModuleImporter = false;
+  const imports: string[][] = [];
+
+  const $ = {
+    dynamic: false,
+    module: false,
+
+    count: 9,
+  };
 
   traverse(ast, {
-    enter: (node, parent) => {
-      if (
-        node.type === 'CallExpression' &&
-        node.callee.name === 'require' &&
-        parent.type === 'VariableDeclarator'
-      ) {
-        parent._require = true;
-        parent._node = node;
-      } else if (
-        node.type === 'CallExpression' &&
-        node.callee.name === 'require' &&
-        parent.type !== 'VariableDeclarator'
-      ) {
-        string.overwrite(node.callee.start, node.callee.end, '$$dynamic_require');
-        addDynamicRequire = true;
-      } else if (node.type === 'ObjectPattern') {
-        node._isproperties = true;
-        node._properties = [];
-        node._original = code.slice(node.start, node.end);
-        parent._isproperties = true;
-      } else if (node.type === 'Property' && parent._isproperties) {
-        parent._properties.push({ [node.key.name]: node.value.name });
-      }
-    },
+    enter: (node) => {
+      if (node.type === 'CallExpression' && node.callee.name === 'require') {
+        const name = node.arguments[0].value;
 
-    leave: (node, parent) => {
-      if (node._require) {
-        // parent: VariableDeclaration
-        // node: VariableDeclarator
-        // node._node: CallExpression
+        if (node.arguments[0].type === 'Literal') {
+          $.count += 1;
 
-        const args = node.init.arguments[0];
+          imports.push([name, $.count.toString(36)]);
 
-        const id = code.slice(args.start, args.end);
-        let type: any;
+          string.overwrite(
+            node.start,
+            node.end,
+            `$$m(${requirePrefix}${$.count.toString(36)})`
+          );
 
-        if (args.type !== 'Literal') {
-          type = 'dynamic';
-        }
-
-        if (node._isproperties) {
-          imports.push({
-            type: type || 'property',
-            value: id,
-            as: node.id._properties
-              .map(
-                (key) =>
-                  `${Object.keys(key)[0]} as ${requirePrefix}${Object.values(key)[0]}`
-              )
-              ?.join(','),
-            id: (node.id._properties as string[]).map((p) => Object.values(p)[0]),
-            original: node.id._original,
-            loc: {
-              start: parent.start,
-              end: parent.end,
-            },
-          });
+          $.module = true;
         } else {
-          imports.push({
-            type: type || 'all',
-            value: id,
-            id: node.id.name,
-            as: `${requirePrefix}${node.id.name}`,
-            original: node.id._original,
-            loc: {
-              start: parent.start,
-              end: parent.end,
-            },
-          });
+          string.overwrite(
+            node.start,
+            node.end,
+            `$$dynamic(${code.slice(node.arguments[0].start, node.arguments[0].end)})`
+          );
+
+          $.dynamic = true;
         }
       }
     },
   });
-
   string.appendLeft(0, options?.insert?.beforeImport || '');
 
-  for (const importer of imports) {
-    switch (importer.type) {
-      case 'all':
-        addModuleImporter = true;
-
-        string.overwrite(
-          importer.loc.start,
-          importer.loc.end,
-          `var ${importer.id}=$$m(${requirePrefix}${importer.id});`
-        );
-        string.appendLeft(0, `import * as ${importer.as} from ${importer.value};`);
-        break;
-
-      case 'property':
-        string.overwrite(
-          importer.loc.start,
-          importer.loc.end,
-          (importer.id as string[])
-            .map((id) => `var ${id}=${requirePrefix}${id};`)
-            .join('')
-        );
-        string.appendLeft(0, `import {${importer.as}} from ${importer.value};`);
-        break;
-
-      case 'dynamic':
-        string.overwrite(
-          importer.loc.start,
-          importer.loc.end,
-          `var ${importer.original || importer.id} = $$dynamic_require(${
-            importer.value
-          });`
-        );
-        addDynamicRequire = true;
-        break;
-
-      default:
-        break;
-    }
+  for (const load of imports) {
+    string.appendLeft(0, `import * as ${requirePrefix}${load[1]} from "${load[0]}";\n`);
   }
 
   string.appendLeft(0, options?.insert?.afterImport || '');
   string.appendLeft(0, options?.insert?.beforeDefines || '');
 
-  if (addDynamicRequire) {
+  if ($.dynamic) {
     if (options?.dynamicImport) {
-      addModuleImporter = true;
-
       string.appendLeft(
         0,
-        // eslint-disable-next-line no-template-curly-in-string
-        'var $$dynamic_require=async(m)=>{if(require){return require(m)}return $$m(await import(m))};'
+        'var $$dynamic=async(m)=>{if(global.require){return require(m)}return $$m(await import(m))};'
       );
+
+      $.module = true;
     } else {
       string.appendLeft(
         0,
         // eslint-disable-next-line no-template-curly-in-string
-        'var $$dynamic_require=(m)=>{if(require){return require(m)}throw new Error(`Cannot load module "${m}"`)};'
+        'var $$dynamic=(m)=>{if(global.require){return require(m)}throw new Error(`Cannot load module "${m}"`)};'
       );
     }
   }
 
-  if (addModuleImporter) {
+  if ($.module) {
     string.appendLeft(0, 'var $$m=(m)=>m.default||m;');
   }
-
   string.appendLeft(0, 'var module={exports:{}};');
-
   string.appendLeft(0, options?.insert?.afterDefines || '');
   string.append(options?.insert?.beforeExport || '');
-
   string.append('export default module;');
 
   string.append(options?.insert?.afterExport || '');
