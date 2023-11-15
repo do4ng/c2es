@@ -1,3 +1,4 @@
+import { builtinModules } from 'node:module';
 import { Parser } from 'acorn';
 import { traverse } from 'estraverse';
 import MagicString from 'magic-string';
@@ -9,7 +10,7 @@ export function process(code: string, options?: TransformOptions) {
 
   const requirePrefix = options?.requirePrefix || '$$require_';
 
-  const imports: string[][] = [];
+  const imports: Record<string, string> = {};
 
   const $ = {
     dynamic: false,
@@ -21,18 +22,25 @@ export function process(code: string, options?: TransformOptions) {
   traverse(ast, {
     enter: (node) => {
       if (node.type === 'CallExpression' && node.callee.name === 'require') {
-        const name = node.arguments[0].value;
+        let name = node.arguments[0].value;
+
+        if (builtinModules.includes(name)) {
+          name = `node:${name}`;
+        }
 
         if (node.arguments[0].type === 'Literal') {
-          $.count += 1;
+          let target;
 
-          imports.push([name, $.count.toString(36)]);
+          if (imports[name]) {
+            target = imports[name];
+          } else {
+            $.count += 1;
 
-          string.overwrite(
-            node.start,
-            node.end,
-            `$$m(${requirePrefix}${$.count.toString(36)})`
-          );
+            imports[name] = $.count.toString(36);
+            target = imports[name];
+          }
+
+          string.overwrite(node.start, node.end, `$$m(${requirePrefix}${target})`);
 
           $.module = true;
         } else {
@@ -49,8 +57,11 @@ export function process(code: string, options?: TransformOptions) {
   });
   string.appendLeft(0, options?.insert?.beforeImport || '');
 
-  for (const load of imports) {
-    string.appendLeft(0, `import * as ${requirePrefix}${load[1]} from "${load[0]}";\n`);
+  for (const load of Object.keys(imports)) {
+    string.appendLeft(
+      0,
+      `import * as ${requirePrefix}${imports[load]} from "${load}";\n`
+    );
   }
 
   string.appendLeft(0, options?.insert?.afterImport || '');
