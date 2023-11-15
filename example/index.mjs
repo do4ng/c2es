@@ -1,10 +1,7 @@
-var $$dynamic_require = (m) => {
-  if (require) {
-    return require(m);
-  }
-  throw new Error(`Cannot load module "${m}"`);
-};
+import * as $$require_a from 'fs';
+var $$m = (m) => m.default || m;
 var module = { exports: {} };
-const target = './main.js';
-var m = $$dynamic_require(target);
+const { readFileSync } = $$m($$require_a);
+
+console.log(readFileSync('./main.js', 'utf-8'));
 export default module;

@@ -1,2 +1,3 @@
-const target = './main.js';
-const m = require(target);
+const { readFileSync } = require('fs');
+
+console.log(readFileSync('./main.js', 'utf-8'));
