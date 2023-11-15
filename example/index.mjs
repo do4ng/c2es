@@ -1,7 +1,13 @@
-import * as $$require_a from 'fs';
-var $$m = (m) => m.default || m;
-var module = { exports: {} };
-const { readFileSync } = $$m($$require_a);
+import * as $$require_a from "node:fs";
+var $$m=(m)=>m.default||m;var module={exports:{}};function a() {
+  $$m($$require_a);
+}
 
-console.log(readFileSync('./main.js', 'utf-8'));
-export default module;
+function b() {
+  $$m($$require_a);
+}
+
+function c() {
+  $$m($$require_a);
+}
+export default module.exports;
