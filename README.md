@@ -1,6 +1,9 @@
 # c2es
 
-`c2es` transforms your code into esm!
+`c2es` transforms your commonjs code into esm!
+
+> This package is still very experimental.  
+> It converts commonjs code to esm but does not minify it.
 
 input source code:
 
@@ -14,15 +17,20 @@ module.exports.readme = readFileSync(j(process.cwd(), 'package.json'), 'utf-8');
 output will be:
 
 ```js
-import * as $$require_fs from 'node:fs';
-import * as $$require_path from 'node:path';
+import * as $$require_a from 'node:fs';
+import * as $$require_b from 'node:path';
+
 var $$m = (m) => m.default || m;
 var module = { exports: {} };
-const { readFileSync } = $$m($$require_fs);
-const { join: j } = $$m($$require_path);
+const { readFileSync } = $$m($$require_a);
+const { join: j } = $$m($$require_b);
 
 module.exports.readme = readFileSync(j(process.cwd(), 'package.json'), 'utf-8');
-export default module.exports;
+
+var $$default = module.exports;
+var { readme: $$export_readme } = module.exports;
+
+export { $$export_readme as readme, $$default as default };
 ```
 
 ## Apis
@@ -47,6 +55,43 @@ npx c2es dist.js --output dist.mjs
 > `--output` option must be provided.
 
 ## Examples
+
+- Export Default
+
+input:
+
+```ts
+function a() {}
+
+function b() {}
+
+function c() {}
+
+module.exports = function () {};
+
+module.exports.a = a;
+module.exports.b = b;
+module.exports.c = c;
+```
+
+output:
+
+```ts
+var module = { exports: {} };
+function a() {}
+function b() {}
+function c() {}
+
+module.exports = function () {};
+module.exports.a = a;
+module.exports.b = b;
+module.exports.c = c;
+
+var $$default = module.exports;
+var { a: $$export_a, b: $$export_b, c: $$export_c } = module.exports;
+
+export { $$export_a as a, $$export_b as b, $$export_c as c, $$default as default };
+```
 
 - Dynamic Import
 
@@ -76,7 +121,9 @@ var $$m = (m) => m.default || m;
 var module = { exports: {} };
 const target = './main.js';
 const m = $$dynamic(target);
-export default module.exports;
+var $$default = module.exports;
+var {} = module.exports;
+export { $$default as default };
 ```
 
 Dynamic import is not yet supported. You can get it to work by defining `require()`.
@@ -98,7 +145,7 @@ a();
 output:
 
 ```ts
-import * as $$require_a from 'fs';
+import * as $$require_a from 'node:fs';
 var $$m = (m) => m.default || m;
 var module = { exports: {} };
 function a() {
@@ -108,7 +155,9 @@ function a() {
   console.log(n, v);
 }
 a();
-export default module.exports;
+var $$default = module.exports;
+var {} = module.exports;
+export { $$default as default };
 ```
 
 - require prefix
@@ -134,45 +183,9 @@ var module = { exports: {} };
 const { readFileSync } = $$m(_require_a);
 
 console.log(readFileSync('./main.js', 'utf-8'));
-export default module.exports;
-```
-
-- redundant load
-
-input:
-
-```ts
-function a() {
-  require('fs');
-}
-
-function b() {
-  require('fs');
-}
-
-function c() {
-  require('fs');
-}
-```
-
-output:
-
-```ts
-import * as $$require_a from 'node:fs';
-var $$m = (m) => m.default || m;
-var module = { exports: {} };
-function a() {
-  $$m($$require_a);
-}
-
-function b() {
-  $$m($$require_a);
-}
-
-function c() {
-  $$m($$require_a);
-}
-export default module.exports;
+var $$default = module.exports;
+var {} = module.exports;
+export { $$default as default };
 ```
 
 ## License
