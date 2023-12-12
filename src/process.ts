@@ -20,7 +20,7 @@ export function process(code: string, options?: TransformOptions) {
     count: 9,
   };
 
-  const { exports, reexports } = parse(code);
+  const { exports } = parse(code);
 
   traverse(ast, {
     enter: (node) => {
