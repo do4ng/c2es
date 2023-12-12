@@ -1,5 +1,6 @@
 import { builtinModules } from 'node:module';
 import { Parser } from 'acorn';
+import { parse } from 'cjs-module-lexer';
 import { traverse } from 'estraverse';
 import MagicString from 'magic-string';
 import { TransformOptions } from '.';
@@ -18,6 +19,8 @@ export function process(code: string, options?: TransformOptions) {
 
     count: 9,
   };
+
+  const { exports, reexports } = parse(code);
 
   traverse(ast, {
     enter: (node) => {
@@ -90,7 +93,17 @@ export function process(code: string, options?: TransformOptions) {
   string.appendLeft(0, 'var module={exports:{}};');
   string.appendLeft(0, options?.insert?.afterDefines || '');
   string.append(options?.insert?.beforeExport || '');
-  string.append('export default module.exports;');
+  string.append('var $$default=module.exports;');
+  string.append(
+    `var {${exports
+      .map((exporter) => `${exporter}:$$export_${exporter}`)
+      .join(',')}}=module.exports;`
+  );
+  string.append(
+    `export {${exports
+      .map((exporter) => `$$export_${exporter} as ${exporter}`)
+      .join(',')}${exports.length === 0 ? '' : ','}$$default as default};`
+  );
 
   string.append(options?.insert?.afterExport || '');
 
