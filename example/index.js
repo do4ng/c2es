@@ -1,11 +1,11 @@
-function a() {
-  require('fs');
-}
+function a() {}
 
-function b() {
-  require('fs');
-}
+function b() {}
 
-function c() {
-  require('fs');
-}
+function c() {}
+
+module.exports = function () {};
+
+module.exports.a = a;
+module.exports.b = b;
+module.exports.c = c;
