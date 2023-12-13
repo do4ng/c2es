@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'fs';
+import { writeFileSync } from 'node:fs';
 import { process } from './process';
 
 export interface TransformOptions {
@@ -18,9 +18,8 @@ export interface TransformOptions {
   };
 }
 
-export function c2es(entry: string, output: string, options?: TransformOptions) {
-  const code = readFileSync(entry);
-  const processed = process(code.toString(), options);
+export async function c2es(entry: string, output: string, options?: TransformOptions) {
+  const processed = await process(entry, options);
 
   if (options?.map?.emit) {
     writeFileSync(options?.map?.dist || `${output}.map`, processed.sourcemap);

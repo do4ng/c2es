@@ -11,9 +11,13 @@ export interface TransformOptions {
   };
 }
 
-export function c2es(entry: string, output: string, options?: TransformOptions): void;
+export function c2es(
+  entry: string,
+  output: string,
+  options?: TransformOptions
+): Promise<void>;
 
 export function process(
-  code: string,
+  path: string,
   options?: TransformOptions
-): { code: string; sourcemap: string };
+): Promise<{ code: string; sourcemap: string }>;

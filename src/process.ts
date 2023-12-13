@@ -1,11 +1,13 @@
+import { readFileSync } from 'node:fs';
 import { builtinModules } from 'node:module';
+import { getExports } from '@do4ng/exports';
 import { Parser } from 'acorn';
-import { parse } from 'cjs-module-lexer';
 import { traverse } from 'estraverse';
 import MagicString from 'magic-string';
 import { TransformOptions } from '.';
 
-export function process(code: string, options?: TransformOptions) {
+export async function process(path: string, options?: TransformOptions) {
+  const code = readFileSync(path).toString();
   const string = new MagicString(code);
   const ast = Parser.parse(code, { ecmaVersion: 'latest' });
 
@@ -20,7 +22,7 @@ export function process(code: string, options?: TransformOptions) {
     count: 9,
   };
 
-  const { exports } = parse(code);
+  const exports = await getExports(path);
 
   traverse(ast, {
     enter: (node) => {
