@@ -188,6 +188,28 @@ var {} = module.exports;
 export { $$default as default };
 ```
 
+## Build Package
+
+Using [asto](https://github.com/do4ng/asto), you can build nodejs package easily.
+
+```txt
+$ npm i --save-dev asto @asto/esm
+```
+
+```js
+const { asto } = require('asto');
+const { esmLoader } = require('@asto/esm');
+
+asto({
+  loader: esmLoader(),
+  entryPoints: [
+    {
+      input: 'src/index.js',
+    },
+  ],
+});
+```
+
 ## License
 
 MIT
